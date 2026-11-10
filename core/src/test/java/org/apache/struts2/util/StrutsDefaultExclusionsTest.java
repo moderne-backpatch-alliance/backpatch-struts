@@ -24,8 +24,10 @@ import com.opensymphony.xwork2.util.ValueStack;
 import org.apache.struts2.StrutsInternalTestCase;
 import org.apache.velocity.VelocityContext;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 
 public class StrutsDefaultExclusionsTest extends StrutsInternalTestCase {
 
@@ -72,5 +74,33 @@ public class StrutsDefaultExclusionsTest extends StrutsInternalTestCase {
         });
 
         assertNull(stack.findValue("velocityContext.keys"));
+    }
+
+    public void testS2060FileMemberIsRefused() throws Exception {
+        final File file = File.createTempFile("s2060", ".txt");
+        try {
+            stack.push(new Object() {
+                public File getFile() {
+                    return file;
+                }
+            });
+
+            assertNull(stack.findValue("file.name"));
+            stack.findValue("file.setReadOnly()");
+            assertTrue(file.canWrite());
+        } finally {
+            file.delete();
+        }
+    }
+
+    public void testS2060JavaNioMemberIsRefused() {
+        final Charset charset = Charset.forName("UTF-8");
+        stack.push(new Object() {
+            public Charset getCharset() {
+                return charset;
+            }
+        });
+
+        assertNull(stack.findValue("charset.name()"));
     }
 }
