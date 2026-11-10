@@ -103,4 +103,13 @@ public class StrutsDefaultExclusionsTest extends StrutsInternalTestCase {
 
         assertNull(stack.findValue("charset.name()"));
     }
+
+    public void testS2061PackagesAreExcluded() {
+        String[] packages = {"org.apache.tomcat.", "org.apache.catalina.core.", "com.ibm.websphere.",
+                "org.apache.geronimo.", "org.apache.openejb.", "org.apache.tomee.", "org.eclipse.jetty.",
+                "org.mortbay.jetty.", "org.glassfish.", "org.jboss.as.", "org.wildfly.", "weblogic."};
+        for (String name : packages) {
+            assertTrue(name, ognlUtil.getExcludedPackageNames().contains(name));
+        }
+    }
 }

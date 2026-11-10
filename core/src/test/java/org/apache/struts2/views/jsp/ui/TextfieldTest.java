@@ -297,4 +297,15 @@ public class TextfieldTest extends AbstractUITagTest {
     }
 
 
+
+    public void testDynamicAttributeIsNotEvaluatedOnAssignment() throws Exception {
+        TestAction testAction = (TestAction) action;
+        testAction.setFoo("bar");
+
+        TextFieldTag tag = new TextFieldTag();
+        tag.setPageContext(pageContext);
+        tag.setDynamicAttribute(null, "data-foo", "%{foo}");
+
+        assertEquals("%{foo}", tag.dynamicAttributes.get("data-foo"));
+    }
 }

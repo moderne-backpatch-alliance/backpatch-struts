@@ -164,4 +164,47 @@ public class UIBeanTest extends StrutsInternalTestCase {
         assertEquals("12", txtFld.getTheme());
     }
 
+
+    public void testValueParameterRecursion() {
+        ValueStack stack = ActionContext.getContext().getValueStack();
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse res = new MockHttpServletResponse();
+
+        stack.push(new Object() {
+            public String getMyValue() {
+                return "%{myBad}";
+            }
+            public String getMyBad() {
+                throw new IllegalStateException("Recursion detected!");
+            }
+        });
+
+        TextField txtFld = new TextField(stack, req, res);
+        txtFld.setName("%{myValue}");
+        txtFld.evaluateParams();
+
+        assertEquals("%{myBad}", txtFld.getParameters().get("nameValue"));
+    }
+
+    public void testIdIsEvaluatedOnce() {
+        ValueStack stack = ActionContext.getContext().getValueStack();
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse res = new MockHttpServletResponse();
+
+        stack.push(new Object() {
+            public String getMyId() {
+                return "%{myOther}";
+            }
+            public String getMyOther() {
+                return "other";
+            }
+        });
+
+        TextField txtFld = new TextField(stack, req, res);
+        txtFld.setId("%{myId}");
+        assertEquals("%{myId}", txtFld.getId());
+
+        txtFld.populateComponentHtmlId(null);
+        assertEquals("%{myOther}", txtFld.getParameters().get("id"));
+    }
 }

@@ -75,7 +75,19 @@
                 com.opensymphony.xwork2.inject.,
                 com.opensymphony.xwork2.ognl.,
                 com.opensymphony.xwork2.security.,
-                com.opensymphony.xwork2.util." />
+                com.opensymphony.xwork2.util.,
+                org.apache.tomcat.,
+                org.apache.catalina.core.,
+                com.ibm.websphere.,
+                org.apache.geronimo.,
+                org.apache.openejb.,
+                org.apache.tomee.,
+                org.eclipse.jetty.,
+                org.mortbay.jetty.,
+                org.glassfish.,
+                org.jboss.as.,
+                org.wildfly.,
+                weblogic.," />
 
     <bean class="com.opensymphony.xwork2.ObjectFactory" name="struts"/>
     <bean type="com.opensymphony.xwork2.factory.ResultFactory" name="struts" class="org.apache.struts2.factory.StrutsResultFactory" />
