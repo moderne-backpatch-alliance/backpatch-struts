@@ -27,6 +27,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerFactory;
@@ -95,6 +96,15 @@ public class DomHelper {
 
         if (factory == null) {
             factory = SAXParserFactory.newInstance();
+        }
+
+        try {
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        } catch (ParserConfigurationException e) {
+            throw new XWorkException("Unable to disable resolving external entities!", e);
+        } catch (SAXException e) {
+            throw new XWorkException("Unable to disable resolving external entities!", e);
         }
 
         factory.setValidating((dtdMappings != null));

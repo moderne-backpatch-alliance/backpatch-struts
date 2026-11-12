@@ -26,7 +26,9 @@ import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.mock.MockActionInvocation;
 import com.opensymphony.xwork2.util.ClassLoaderUtil;
 import com.opensymphony.xwork2.util.ValueStack;
+import org.apache.commons.io.FileUtils;
 import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.StrutsException;
 import org.apache.struts2.StrutsInternalTestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -34,8 +36,12 @@ import org.springframework.mock.web.MockServletContext;
 
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -214,6 +220,48 @@ public class XSLTResultTest extends StrutsInternalTestCase {
         String actual = response.getCharacterEncoding();
 
         assertEquals(actual, "ISO-8859-1");
+    }
+
+    public void testStylesheetWithExternalDtdIsRefused() throws Exception {
+        File dtd = File.createTempFile("XSLTResultTest", ".dtd");
+        final File xsl = File.createTempFile("XSLTResultTest", ".xsl");
+        dtd.deleteOnExit();
+        xsl.deleteOnExit();
+        FileUtils.writeStringToFile(dtd, "<!-- empty -->");
+        FileUtils.writeStringToFile(xsl, "<!DOCTYPE xsl:stylesheet SYSTEM \"" + dtd.toURI() + "\">"
+                + "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"/>");
+        ActionContext.getContext().put(ServletActionContext.SERVLET_CONTEXT, new MockServletContext() {
+            public URL getResource(String path) throws MalformedURLException {
+                return xsl.toURI().toURL();
+            }
+        });
+
+        result.setParse(false);
+        result.setLocation(xsl.getName());
+        try {
+            result.execute(mai);
+            fail("Should have refused the external DTD");
+        } catch (TransformerException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("accessExternalDTD"));
+        }
+    }
+
+    public void testNoStylesheetUsesTheFactoryMethod() throws Exception {
+        final int[] calls = {0};
+        result = new XSLTResult() {
+            protected TransformerFactory createTransformerFactory() {
+                calls[0]++;
+                return TransformerFactory.newInstance();
+            }
+        };
+
+        try {
+            result.execute(mai);
+        } catch (StrutsException e) {
+            assertEquals("Error transforming result", e.getMessage());
+        }
+
+        assertEquals(1, calls[0]);
     }
 
     protected void setUp() throws Exception {

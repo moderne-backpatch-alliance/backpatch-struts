@@ -365,7 +365,7 @@ public class XSLTResult implements Result {
                 templates = getTemplates(location);
                 transformer = templates.newTransformer();
             } else
-                transformer = TransformerFactory.newInstance().newTransformer();
+                transformer = createTransformerFactory().newTransformer();
 
             transformer.setURIResolver(getURIResolver());
             transformer.setErrorListener(new ErrorListener() {
@@ -429,6 +429,17 @@ public class XSLTResult implements Result {
         }
     }
 
+    protected TransformerFactory createTransformerFactory() {
+        TransformerFactory factory = TransformerFactory.newInstance();
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Disables parsing external entities");
+        }
+        // Literals, not XMLConstants.ACCESS_EXTERNAL_*: Java 6's XMLConstants lacks them.
+        factory.setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "");
+        factory.setAttribute("http://javax.xml.XMLConstants/property/accessExternalStylesheet", "");
+        return factory;
+    }
+
     protected AdapterFactory getAdapterFactory() {
         if (adapterFactory == null)
             adapterFactory = new AdapterFactory();
@@ -466,7 +477,7 @@ public class XSLTResult implements Result {
                     LOG.debug("Preparing XSLT stylesheet templates: " + path);
                 }
 
-                TransformerFactory factory = TransformerFactory.newInstance();
+                TransformerFactory factory = createTransformerFactory();
                 factory.setURIResolver(getURIResolver());
                 templates = factory.newTemplates(new StreamSource(resource.openStream()));
                 templatesCache.put(path, templates);

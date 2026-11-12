@@ -67,4 +67,19 @@ public class DomHelperTest extends TestCase {
         assertTrue("Should be line 6, was "+loc.getLineNumber(), 
             6==loc.getLineNumber());
     }
+
+    public void testExternalEntities() {
+        String dtdFile = getClass().getResource("/author.dtd").getPath();
+        String xml = "<!DOCTYPE foo [<!ELEMENT foo (bar)><!ELEMENT bar (#PCDATA)><!ENTITY writer SYSTEM \"file://" + dtdFile + "\">]><foo><bar>&writer;</bar></foo>";
+        InputSource in = new InputSource(new StringReader(xml));
+        in.setSystemId("foo://bar");
+
+        Document doc = DomHelper.parse(in);
+        assertNotNull(doc);
+        assertEquals("Wrong root node", "foo", doc.getDocumentElement().getNodeName());
+
+        NodeList nl = doc.getElementsByTagName("bar");
+        assertEquals(1, nl.getLength());
+        assertNull(nl.item(0).getNodeValue());
+    }
 }
