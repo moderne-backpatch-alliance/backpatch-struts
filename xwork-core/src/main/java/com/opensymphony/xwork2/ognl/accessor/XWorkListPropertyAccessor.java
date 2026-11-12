@@ -45,7 +45,20 @@ public class XWorkListPropertyAccessor extends ListPropertyAccessor {
     private ObjectFactory objectFactory;
     private ObjectTypeDeterminer objectTypeDeterminer;
     private OgnlUtil ognlUtil;
-    
+
+    private int autoGrowCollectionLimit = 255;
+
+    @Deprecated()
+    @Inject(value = "xwork.autoGrowCollectionLimit", required = false)
+    public void setDeprecatedAutoGrowCollectionLimit(String value) {
+        this.autoGrowCollectionLimit = Integer.parseInt(value);
+    }
+
+    @Inject(value = "struts.ognl.autoGrowthCollectionLimit", required = false)
+    public void setAutoGrowCollectionLimit(String value) {
+        this.autoGrowCollectionLimit = Integer.parseInt(value);
+    }
+
     @Inject("java.util.Collection")
     public void setXWorkCollectionPropertyAccessor(PropertyAccessor acc) {
         this._sAcc = (XWorkCollectionPropertyAccessor) acc;
@@ -101,6 +114,11 @@ public class XWorkListPropertyAccessor extends ListPropertyAccessor {
             Class beanClass = objectTypeDeterminer.getElementClass(lastClass, lastProperty, name);
             if (listSize <= index) {
                 Object result = null;
+
+                if (index > autoGrowCollectionLimit) {
+                    throw new OgnlException("Error auto growing collection size to " + index + " which limited to "
+                                            + autoGrowCollectionLimit);
+                }
 
                 for (int i = listSize; i < index; i++) {
 
@@ -163,6 +181,10 @@ public class XWorkListPropertyAccessor extends ListPropertyAccessor {
             List list = (List) target;
             int listSize = list.size();
             int count = ((Number) name).intValue();
+            if (count > autoGrowCollectionLimit) {
+                throw new OgnlException("Error auto growing collection size to " + count + " which limited to "
+                                        + autoGrowCollectionLimit);
+            }
             if (count >= listSize) {
                 for (int i = listSize; i <= count; i++) {
                     list.add(null);
