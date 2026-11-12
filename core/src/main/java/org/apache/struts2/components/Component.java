@@ -22,6 +22,7 @@
 package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.inject.Inject;
+import com.opensymphony.xwork2.security.NotExcludedAcceptedPatternsChecker;
 import com.opensymphony.xwork2.util.AnnotationUtils;
 import com.opensymphony.xwork2.util.TextParseUtil;
 import com.opensymphony.xwork2.util.ValueStack;
@@ -76,6 +77,8 @@ public class Component {
     protected boolean throwExceptionOnELFailure;
     private UrlHelper urlHelper;
 
+    private NotExcludedAcceptedPatternsChecker notExcludedAcceptedPatterns;
+
     /**
      * Constructor.
      *
@@ -118,6 +121,11 @@ public class Component {
     public void setUrlHelper(UrlHelper urlHelper) {
         this.urlHelper = urlHelper;
     }
+    @Inject
+    public void setNotExcludedAcceptedPatterns(NotExcludedAcceptedPatternsChecker notExcludedAcceptedPatterns) {
+        this.notExcludedAcceptedPatterns = notExcludedAcceptedPatterns;
+    }
+
     /**
      * Gets the OGNL value stack assoicated with this component.
      * @return the OGNL value stack assoicated with this component.
@@ -386,15 +394,6 @@ public class Component {
     }
 
     /**
-     * Detects if altSyntax is enabled and then checks if expression contains %{...}
-     * @param expr a string to examined
-     * @return true if altSyntax is enabled and expr contains %{...}
-     */
-    protected boolean recursion(String expr) {
-        return ComponentUtils.altSyntax(stack) && ComponentUtils.containsExpression(expr);
-    }
-
-    /**
      * Renders an action URL by consulting the {@link org.apache.struts2.dispatcher.mapper.ActionMapper}.
      * @param action      the action
      * @param namespace   the namespace
@@ -561,4 +560,21 @@ public class Component {
         return standardAttributes;
     }
 
+    /**
+     * Checks if expression doesn't contain vulnerable code
+     *
+     * @param expression of the component
+     * @return true|false
+     */
+    protected boolean isAcceptableExpression(String expression) {
+        NotExcludedAcceptedPatternsChecker.IsAllowed isAllowed = notExcludedAcceptedPatterns.isAllowed(expression);
+        if (isAllowed.isAllowed()) {
+            return true;
+        }
+
+        LOG.warn("Expression [#0] isn't allowed by pattern [#1]! See Accepted / Excluded patterns at\n" +
+                "https://struts.apache.org/security/", expression, isAllowed.getAllowedPattern());
+
+        return false;
+    }
 }

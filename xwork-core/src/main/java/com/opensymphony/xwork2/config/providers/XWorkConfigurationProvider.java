@@ -10,6 +10,7 @@ import com.opensymphony.xwork2.security.DefaultExcludedPatternsChecker;
 import com.opensymphony.xwork2.DefaultLocaleProvider;
 import com.opensymphony.xwork2.DefaultTextProvider;
 import com.opensymphony.xwork2.DefaultUnknownHandlerManager;
+import com.opensymphony.xwork2.security.DefaultNotExcludedAcceptedPatternsChecker;
 import com.opensymphony.xwork2.security.ExcludedPatternsChecker;
 import com.opensymphony.xwork2.FileManager;
 import com.opensymphony.xwork2.FileManagerFactory;
@@ -67,6 +68,7 @@ import com.opensymphony.xwork2.ognl.accessor.XWorkIteratorPropertyAccessor;
 import com.opensymphony.xwork2.ognl.accessor.XWorkListPropertyAccessor;
 import com.opensymphony.xwork2.ognl.accessor.XWorkMapPropertyAccessor;
 import com.opensymphony.xwork2.ognl.accessor.XWorkMethodAccessor;
+import com.opensymphony.xwork2.security.NotExcludedAcceptedPatternsChecker;
 import com.opensymphony.xwork2.util.CompoundRoot;
 import com.opensymphony.xwork2.util.OgnlTextParser;
 import com.opensymphony.xwork2.util.PatternMatcher;
@@ -179,6 +181,8 @@ public class XWorkConfigurationProvider implements ConfigurationProvider {
 
                 .factory(ExcludedPatternsChecker.class, DefaultExcludedPatternsChecker.class, Scope.DEFAULT)
                 .factory(AcceptedPatternsChecker.class, DefaultAcceptedPatternsChecker.class, Scope.DEFAULT)
+                .factory(NotExcludedAcceptedPatternsChecker.class, DefaultNotExcludedAcceptedPatternsChecker.class
+                        , Scope.SINGLETON)
         ;
 
         props.setProperty(XWorkConstants.DEV_MODE, Boolean.FALSE.toString());

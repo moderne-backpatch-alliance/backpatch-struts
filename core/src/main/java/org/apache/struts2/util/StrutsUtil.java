@@ -144,7 +144,7 @@ public class StrutsUtil {
     }
 
     public String getText(String text) {
-        return (String) stack.findValue("getText('" + text + "')");
+        return (String) stack.findValue("getText('" + text.replace('\'', '"') + "')");
     }
 
     /*

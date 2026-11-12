@@ -124,6 +124,12 @@ public class Param extends Component {
                     throw new StrutsException("No name found for following expression: " + this.name);
                 }
 
+                boolean evaluated = !name.equals(this.name);
+                boolean reevaluate = !evaluated || isAcceptableExpression(name);
+                if (!reevaluate) {
+                    throw new StrutsException("Excluded or not accepted name found: " + name);
+                }
+
                 Object value = findValue(this.value);
                 if (suppressEmptyParameters) {
                     if (value != null && !value.toString().isEmpty()) {
@@ -143,7 +149,8 @@ public class Param extends Component {
 
         return super.end(writer, "");
     }
-    
+
+    @Override
     public boolean usesBody() {
         return true;
     }
@@ -175,7 +182,7 @@ public class Param extends Component {
          * Adds the given value as a parameter to the outer tag.
          * @param value  the value
          */
-        public void addParameter(Object value);
+        void addParameter(Object value);
     }
 
 }

@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 
+import org.apache.struts2.NoExclusionAcceptAllPatternsChecker;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.StrutsInternalTestCase;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -216,11 +217,41 @@ public class StreamResultTest extends StrutsInternalTestCase {
         assertEquals("filename=\"logo.png\"", response.getHeader("Content-disposition"));
     }
 
+    public void testStreamResultParseExpression() throws Exception {
+        result.setParse(true);
+        result.setInputName("${streamForImageAsExpression}");
+
+        try {
+            result.doExecute("helloworld", mai);
+            fail("double evaluation?!");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Can not find a java.io.InputStream with the name [getStreamForImage()] in the " +
+                    "invocation stack. Check the <param name=\"inputName\"> tag specified for this action is correct, " +
+                    "not excluded and accepted.", e.getMessage());
+        }
+
+        // verify that above test has really effect
+        result.setNotExcludedAcceptedPatterns(NoExclusionAcceptAllPatternsChecker.INSTANCE);
+        assertNull(result.inputStream);
+        result.doExecute("helloworld", mai);
+        assertNotNull(result.inputStream);
+        container.inject(result);   // roll back pattern checkers
+    }
+
+    public void testStreamResultParseGetter() throws Exception {
+        result.setParse(true);
+        result.setInputName("getStreamForImage()");
+        assertNull(result.inputStream);
+        result.doExecute("helloworld", mai);
+        assertNotNull(result.inputStream);
+    }
+
     protected void setUp() throws Exception {
         super.setUp();
         response = new MockHttpServletResponse();
 
         result = new StreamResult();
+        container.inject(result);
         stack = ActionContext.getContext().getValueStack();
 
         MyImageAction action = new MyImageAction();
@@ -268,6 +299,10 @@ public class StreamResultTest extends StrutsInternalTestCase {
 
         public String getStreamForImageAsString() {
             return "streamForImage";
+        }
+
+        public String getStreamForImageAsExpression() {
+            return "getStreamForImage()";
         }
 
         public String getContentCharSetMethod() {

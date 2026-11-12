@@ -25,6 +25,7 @@ import com.opensymphony.xwork2.ActionProxyFactory;
 import com.opensymphony.xwork2.factory.UnknownHandlerFactory;
 import com.opensymphony.xwork2.security.AcceptedPatternsChecker;
 import com.opensymphony.xwork2.security.ExcludedPatternsChecker;
+import com.opensymphony.xwork2.security.NotExcludedAcceptedPatternsChecker;
 import com.opensymphony.xwork2.FileManager;
 import com.opensymphony.xwork2.FileManagerFactory;
 import com.opensymphony.xwork2.LocaleProvider;
@@ -410,6 +411,8 @@ public class DefaultBeanSelectionProvider extends AbstractBeanSelectionProvider 
         /** Checker is used mostly in interceptors, so there be one instance of checker per interceptor with Scope.DEFAULT **/
         alias(ExcludedPatternsChecker.class, StrutsConstants.STRUTS_EXCLUDED_PATTERNS_CHECKER, builder, props, Scope.DEFAULT);
         alias(AcceptedPatternsChecker.class, StrutsConstants.STRUTS_ACCEPTED_PATTERNS_CHECKER, builder, props, Scope.DEFAULT);
+        alias(NotExcludedAcceptedPatternsChecker.class, StrutsConstants.STRUTS_NOT_EXCLUDED_ACCEPTED_PATTERNS_CHECKER
+                , builder, props, Scope.SINGLETON);
 
         switchDevMode(props);
 

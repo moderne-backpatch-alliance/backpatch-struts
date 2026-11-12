@@ -27,6 +27,8 @@ import java.io.OutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import com.opensymphony.xwork2.ActionInvocation;
+import com.opensymphony.xwork2.inject.Inject;
+import com.opensymphony.xwork2.security.NotExcludedAcceptedPatternsChecker;
 import com.opensymphony.xwork2.util.logging.Logger;
 import com.opensymphony.xwork2.util.logging.LoggerFactory;
 import com.opensymphony.xwork2.util.ValueStack;
@@ -104,6 +106,8 @@ public class StreamResult extends StrutsResultSupport {
     protected int bufferSize = 1024;
     protected boolean allowCaching = true;
 
+    private NotExcludedAcceptedPatternsChecker notExcludedAcceptedPatterns;
+
     public StreamResult() {
         super();
     }
@@ -117,6 +121,11 @@ public class StreamResult extends StrutsResultSupport {
      */
     public boolean getAllowCaching() {
         return allowCaching;
+    }
+
+    @Inject
+    public void setNotExcludedAcceptedPatterns(NotExcludedAcceptedPatternsChecker notExcludedAcceptedPatterns) {
+        this.notExcludedAcceptedPatterns = notExcludedAcceptedPatterns;
     }
 
     /**
@@ -225,14 +234,17 @@ public class StreamResult extends StrutsResultSupport {
         OutputStream oOutput = null;
 
         try {
-            if (inputStream == null) {
+            String parsedInputName = conditionalParse(inputName, invocation);
+            boolean evaluated = parsedInputName != null && !parsedInputName.equals(inputName);
+            boolean reevaluate = !evaluated || isAcceptableExpression(parsedInputName);
+            if (inputStream == null && reevaluate) {
                 // Find the inputstream from the invocation variable stack
-                inputStream = (InputStream) invocation.getStack().findValue(conditionalParse(inputName, invocation));
+                inputStream = (InputStream) invocation.getStack().findValue(parsedInputName);
             }
 
             if (inputStream == null) {
-                String msg = ("Can not find a java.io.InputStream with the name [" + inputName + "] in the invocation stack. " +
-                    "Check the <param name=\"inputName\"> tag specified for this action.");
+                String msg = ("Can not find a java.io.InputStream with the name [" + parsedInputName + "] in the invocation stack. " +
+                    "Check the <param name=\"inputName\"> tag specified for this action is correct, not excluded and accepted.");
                 LOG.error(msg);
                 throw new IllegalArgumentException(msg);
             }
@@ -345,4 +357,21 @@ public class StreamResult extends StrutsResultSupport {
         }
     }
 
+    /**
+     * Checks if expression doesn't contain vulnerable code
+     *
+     * @param expression of result
+     * @return true|false
+     */
+    protected boolean isAcceptableExpression(String expression) {
+        NotExcludedAcceptedPatternsChecker.IsAllowed isAllowed = notExcludedAcceptedPatterns.isAllowed(expression);
+        if (isAllowed.isAllowed()) {
+            return true;
+        }
+
+        LOG.warn("Expression [#0] isn't allowed by pattern [#1]! See Accepted / Excluded patterns at\n" +
+                "https://struts.apache.org/security/", expression, isAllowed.getAllowedPattern());
+
+        return false;
+    }
 }

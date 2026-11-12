@@ -4,6 +4,8 @@ import com.opensymphony.xwork2.XWorkTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class DefaultAcceptedPatternsCheckerTest extends XWorkTestCase {
 
@@ -64,4 +66,26 @@ public class DefaultAcceptedPatternsCheckerTest extends XWorkTestCase {
         assertTrue("Param with underscore wasn't accepted!", actual.isAccepted());
     }
 
+
+    public static final AcceptedPatternsChecker ACCEPT_ALL_PATTERNS_CHECKER = new AcceptedPatternsChecker() {
+        public IsAccepted isAccepted(String value) {
+            return IsAccepted.yes(".*");
+        }
+
+        public void setAcceptedPatterns(String commaDelimitedPatterns) {
+
+        }
+
+        public void setAcceptedPatterns(String[] patterns) {
+
+        }
+
+        public void setAcceptedPatterns(Set<String> patterns) {
+
+        }
+
+        public Set<Pattern> getAcceptedPatterns() {
+            return null;
+        }
+    };
 }

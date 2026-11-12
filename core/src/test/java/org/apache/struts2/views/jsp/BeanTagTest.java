@@ -21,7 +21,12 @@
 
 package org.apache.struts2.views.jsp;
 
+import org.apache.struts2.NoExclusionAcceptAllPatternsChecker;
+import org.apache.struts2.StrutsException;
+
 import javax.servlet.jsp.JspException;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -49,5 +54,59 @@ public class BeanTagTest extends AbstractUITagTest {
 
         request.verify();
         pageContext.verify();
+    }
+
+    public void testNotAccepted() throws Exception {
+        BeanTag tag = new BeanTag();
+        tag.setPageContext(pageContext);
+        tag.setName("org.apache.struts2.TestAction");
+
+        Map<String, String> tmp = new HashMap<String, String>();
+        tmp.put("paramName", "getArray()[0]");
+        context.put("parameters", tmp);
+        ParamTag param1 = new ParamTag();
+        param1.setPageContext(pageContext);
+        param1.setName("%{#parameters['paramName']}");
+        param1.setValue("'success'");
+
+        tag.doStartTag();
+        param1.doStartTag();
+
+        try {
+            param1.doEndTag();
+            fail("an excluded or not accepted is evaluated?!");
+        } catch (StrutsException e) {
+            assertEquals("Excluded or not accepted name found: getArray()[0]", e.getMessage());
+            assertNull(stack.findValue("result"));
+        }
+
+        param1.component.setNotExcludedAcceptedPatterns(NoExclusionAcceptAllPatternsChecker.INSTANCE);
+        tag.component.addParameter("array", "just to instantiate array to avoid null for getArray()");
+
+        param1.doEndTag();
+        assertEquals("success", stack.findValue("array[0]"));
+
+        tag.doEndTag();
+    }
+
+    public void testGetterAccepted() throws Exception {
+        BeanTag tag = new BeanTag();
+        tag.setPageContext(pageContext);
+        tag.setName("org.apache.struts2.TestAction");
+
+        ParamTag param1 = new ParamTag();
+        param1.setPageContext(pageContext);
+        param1.setName("getArray()[0]");
+        param1.setValue("'success'");
+
+        tag.doStartTag();
+        param1.doStartTag();
+
+        tag.component.addParameter("array", "just to instantiate array to avoid null for getArray()");
+
+        param1.doEndTag();
+        assertEquals("success", stack.findValue("array[0]"));
+
+        tag.doEndTag();
     }
 }

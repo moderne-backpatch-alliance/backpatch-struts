@@ -23,6 +23,7 @@ package org.apache.struts2.components;
 
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.util.ValueStack;
+import org.apache.struts2.NoExclusionAcceptAllPatternsChecker;
 import org.apache.struts2.StrutsInternalTestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -112,8 +113,8 @@ public class UIBeanTest extends StrutsInternalTestCase {
         assertEquals(bean.escape("hello[world"), "hello_world");
         assertEquals(bean.escape("hello.world"), "hello_world");
         assertEquals(bean.escape("hello]world"), "hello_world");
-        assertEquals(bean.escape("hello!world"), "hello!world");
-        assertEquals(bean.escape("hello!@#$%^&*()world"), "hello!@#$%^&*()world");
+        assertEquals(bean.escape("hello!world"), "hello_world");
+        assertEquals(bean.escape("hello!@#$%^&*()world"), "hello__________world");
     }
 
     public void testEscapeId() throws Exception {
@@ -180,10 +181,12 @@ public class UIBeanTest extends StrutsInternalTestCase {
         });
 
         TextField txtFld = new TextField(stack, req, res);
+        container.inject(txtFld);
         txtFld.setName("%{myValue}");
         txtFld.evaluateParams();
 
         assertEquals("%{myBad}", txtFld.getParameters().get("nameValue"));
+        assertEquals("%{myBad}", txtFld.getParameters().get("name"));
     }
 
     public void testIdIsEvaluatedOnce() {
@@ -206,5 +209,51 @@ public class UIBeanTest extends StrutsInternalTestCase {
 
         txtFld.populateComponentHtmlId(null);
         assertEquals("%{myOther}", txtFld.getParameters().get("id"));
+    }
+
+    public void testValueNameParameterNotAccepted() {
+        ValueStack stack = ActionContext.getContext().getValueStack();
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse res = new MockHttpServletResponse();
+
+        stack.push(new Object() {
+            public String getMyValueName() {
+                return "getMyValue()";
+            }
+            public String getMyValue() {
+                return "value";
+            }
+        });
+
+        TextField txtFld = new TextField(stack, req, res);
+        container.inject(txtFld);
+        txtFld.setName("%{myValueName}");
+        txtFld.evaluateParams();
+        assertEquals("getMyValue()", txtFld.getParameters().get("name"));
+        assertEquals("getMyValue()", txtFld.getParameters().get("nameValue"));
+
+        txtFld.setNotExcludedAcceptedPatterns(NoExclusionAcceptAllPatternsChecker.INSTANCE);
+        txtFld.evaluateParams();
+        assertEquals("getMyValue()", txtFld.getParameters().get("name"));
+        assertEquals("value", txtFld.getParameters().get("nameValue"));
+    }
+
+    public void testValueNameParameterGetterAccepted() {
+        ValueStack stack = ActionContext.getContext().getValueStack();
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse res = new MockHttpServletResponse();
+
+        stack.push(new Object() {
+            public String getMyValue() {
+                return "value";
+            }
+        });
+
+        TextField txtFld = new TextField(stack, req, res);
+        container.inject(txtFld);
+        txtFld.setName("getMyValue()");
+        txtFld.evaluateParams();
+        assertEquals("getMyValue()", txtFld.getParameters().get("name"));
+        assertEquals("value", txtFld.getParameters().get("nameValue"));
     }
 }

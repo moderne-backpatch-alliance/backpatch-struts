@@ -3,8 +3,11 @@ package com.opensymphony.xwork2.security;
 import com.opensymphony.xwork2.XWorkTestCase;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class DefaultExcludedPatternsCheckerTest extends XWorkTestCase {
 
@@ -138,4 +141,26 @@ public class DefaultExcludedPatternsCheckerTest extends XWorkTestCase {
         }
     }
 
+
+    public static final ExcludedPatternsChecker NO_EXCLUSION_PATTERNS_CHECKER = new ExcludedPatternsChecker() {
+        public IsExcluded isExcluded(String value) {
+            return IsExcluded.no(new HashSet<Pattern>());
+        }
+
+        public void setExcludedPatterns(String commaDelimitedPatterns) {
+
+        }
+
+        public void setExcludedPatterns(String[] patterns) {
+
+        }
+
+        public void setExcludedPatterns(Set<String> patterns) {
+
+        }
+
+        public Set<Pattern> getExcludedPatterns() {
+            return null;
+        }
+    };
 }

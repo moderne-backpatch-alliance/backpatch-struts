@@ -799,10 +799,12 @@ public abstract class UIBean extends Component {
                     if (value != null) {
                         addParameter("nameValue", findValue(value, valueClazz));
                     } else if (name != null) {
-                        String expr = completeExpressionIfAltSyntax(name);
-                        if (recursion(name)) {
-                            addParameter("nameValue", expr);
+                        boolean evaluated = !name.equals(this.name);
+                        boolean reevaluate = !evaluated || isAcceptableExpression(name);
+                        if (!reevaluate) {
+                            addParameter("nameValue", name);
                         } else {
+                            String expr = completeExpressionIfAltSyntax(name);
                             addParameter("nameValue", findValue(expr, valueClazz));
                         }
                     }
@@ -899,7 +901,7 @@ public abstract class UIBean extends Component {
 	protected String escape(String name) {
         // escape any possible values that can make the ID painful to work with in JavaScript
         if (name != null) {
-            return name.replaceAll("[\\/\\.\\[\\]]", "_");
+            return name.replaceAll("[^a-zA-Z0-9_]", "_");
         } else {
             return null;
         }

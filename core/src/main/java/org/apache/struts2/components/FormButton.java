@@ -134,6 +134,7 @@ public abstract class FormButton extends ClosingUIBean {
             }
         }
         addParameter("id", _tmp_id);
+        addParameter("escapedId", escape(_tmp_id));
     }
 
     /**

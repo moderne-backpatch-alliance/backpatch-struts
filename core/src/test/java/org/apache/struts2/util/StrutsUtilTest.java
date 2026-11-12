@@ -134,6 +134,12 @@ public class StrutsUtilTest extends StrutsInternalTestCase {
     }
 
 
+    public void testGetTextMethodWithSingleQuote() {
+        String expression = "xwork.error.action.execution') + getText('xwork.error.action.execution";
+        String text = strutsUtil.getText(expression);
+        assertNull(text);
+    }
+
     public void testGetContextMethod() throws Exception {
         request.setContextPath("/myContext");
         assertEquals(strutsUtil.getContext(), "/myContext");
