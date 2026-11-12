@@ -21,10 +21,12 @@
 
 package org.apache.struts2.dispatcher.multipart;
 
+import org.apache.commons.fileupload.FileItem;
 import org.apache.struts2.StrutsInternalTestCase;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Test cases for {@link JakartaMultiPartRequest} that check what it leaves in the save directory.
@@ -43,7 +45,7 @@ public class JakartaMultiPartRequestTest extends StrutsInternalTestCase {
         tempDir.delete();
         tempDir.mkdirs();
 
-        multiPartRequest = new JakartaMultiPartRequest();
+        multiPartRequest = new TestableJakartaMultiPartRequest();
         multiPartRequest.setMaxSize("2048");
         multiPartRequest.setMaxStringLength("20");
     }
@@ -83,6 +85,90 @@ public class JakartaMultiPartRequestTest extends StrutsInternalTestCase {
         assertEquals(0, tempDir.listFiles().length);
     }
 
+    /**
+     * Test that comprehensive cleanup removes all temporary files created during multipart processing.
+     * This addresses the security vulnerability where temporary files could be leaked.
+     */
+    public void testComprehensiveCleanupRemovesAllTempFiles() throws Exception {
+        // Create a mock multipart request with both file upload and form field
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setContentType("multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW");
+        request.setMethod("POST");
+
+        String multipartContent = createMultipartContent();
+        request.setContent(multipartContent.getBytes("UTF-8"));
+
+        // Count files before processing
+        int filesBefore = countTempFiles();
+
+        // Process the multipart request
+        multiPartRequest.parse(request, tempDir.getAbsolutePath());
+
+        // Count files after processing (should be more due to temp files)
+        int filesAfterProcessing = countTempFiles();
+
+        // Verify that temp files were created during processing
+        assertTrue("Temporary files should be created during multipart processing",
+                   filesAfterProcessing > filesBefore);
+
+        // Perform cleanup
+        multiPartRequest.cleanUp();
+
+        // Count files after cleanup
+        int filesAfterCleanup = countTempFiles();
+
+        // Verify comprehensive cleanup removed all temporary files
+        assertEquals("All temporary files should be cleaned up", filesBefore, filesAfterCleanup);
+    }
+
+    /**
+     * Test that all FileItem instances are tracked for cleanup, including both file uploads and form fields.
+     */
+    public void testAllFileItemsAreTrackedForCleanup() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setContentType("multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW");
+        request.setMethod("POST");
+
+        String multipartContent = createMultipartContentWithMultipleFields();
+        request.setContent(multipartContent.getBytes("UTF-8"));
+
+        // Process the multipart request
+        multiPartRequest.parse(request, tempDir.getAbsolutePath());
+
+        // Access the tracked items through our testable implementation
+        TestableJakartaMultiPartRequest testable = (TestableJakartaMultiPartRequest) multiPartRequest;
+        List<FileItem> trackedItems = testable.getAllFileItems();
+
+        // Verify that all items (both files and form fields) are tracked
+        assertTrue("Should track multiple FileItem instances", trackedItems.size() >= 3);
+
+        // Verify tracking includes both form fields and file uploads
+        boolean hasFormField = false;
+        boolean hasFileUpload = false;
+
+        for (FileItem item : trackedItems) {
+            if (item.isFormField()) {
+                hasFormField = true;
+            } else {
+                hasFileUpload = true;
+            }
+        }
+
+        assertTrue("Should track form field items", hasFormField);
+        assertTrue("Should track file upload items", hasFileUpload);
+    }
+
+    public void testFilePartWithoutAFileNameIsCleanedUp() throws Exception {
+        multiPartRequest.parse(request(null, filePart("file", "", "file content")), tempDir.getAbsolutePath());
+
+        assertEquals(1, tempDir.listFiles().length);
+        assertFalse(multiPartRequest.getFileParameterNames().hasMoreElements());
+
+        multiPartRequest.cleanUp();
+
+        assertEquals(0, tempDir.listFiles().length);
+    }
+
     public void testDefaultMaxStringLengthReachesTheParser() throws Exception {
         StringBuilder atLimit = new StringBuilder();
         for (int i = 0; i < 4096; i++) {
@@ -119,6 +205,53 @@ public class JakartaMultiPartRequestTest extends StrutsInternalTestCase {
 
     private String formField(String name, String value) {
         return "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n" + value;
+    }
+
+    private String filePart(String name, String fileName, String content) {
+        return "Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + fileName + "\"\r\n"
+                + "Content-Type: text/plain\r\n\r\n" + content;
+    }
+
+    private String createMultipartContent() {
+        return "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n" +
+               "Content-Disposition: form-data; name=\"textField\"\r\n\r\n" +
+               "test value\r\n" +
+               "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n" +
+               "Content-Disposition: form-data; name=\"fileField\"; filename=\"test.txt\"\r\n" +
+               "Content-Type: text/plain\r\n\r\n" +
+               "file content\r\n" +
+               "------WebKitFormBoundary7MA4YWxkTrZu0gW--\r\n";
+    }
+
+    private String createMultipartContentWithMultipleFields() {
+        return "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n" +
+               "Content-Disposition: form-data; name=\"textField1\"\r\n\r\n" +
+               "value1\r\n" +
+               "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n" +
+               "Content-Disposition: form-data; name=\"textField2\"\r\n\r\n" +
+               "value2\r\n" +
+               "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\n" +
+               "Content-Disposition: form-data; name=\"fileField\"; filename=\"test.txt\"\r\n" +
+               "Content-Type: text/plain\r\n\r\n" +
+               "file content\r\n" +
+               "------WebKitFormBoundary7MA4YWxkTrZu0gW--\r\n";
+    }
+
+    private int countTempFiles() {
+        if (tempDir == null || !tempDir.exists()) {
+            return 0;
+        }
+        File[] files = tempDir.listFiles();
+        return files != null ? files.length : 0;
+    }
+
+    /**
+     * Testable subclass that exposes internal state for verification
+     */
+    private static class TestableJakartaMultiPartRequest extends JakartaMultiPartRequest {
+        public List<FileItem> getAllFileItems() {
+            return allFileItems;
+        }
     }
 
 }

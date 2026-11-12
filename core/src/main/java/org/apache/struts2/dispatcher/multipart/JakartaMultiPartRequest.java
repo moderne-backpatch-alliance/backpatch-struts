@@ -48,7 +48,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Multipart form data request adapter for Jakarta Commons Fileupload package.
@@ -62,6 +61,9 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
 
     // maps parameter name -> List of param values
     protected Map<String, List<String>> params = new HashMap<String, List<String>>();
+
+    // List to track all FileItem instances for comprehensive cleanup
+    protected List<FileItem> allFileItems = new ArrayList<FileItem>();
 
     // any errors while processing this request
     protected List<String> errors = new ArrayList<String>();
@@ -144,6 +146,10 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Found item " + item.getFieldName());
             }
+
+            // Track all FileItem instances for comprehensive cleanup
+            allFileItems.add(item);
+
             if (item.isFormField()) {
                 processNormalFormField(item, request.getCharacterEncoding());
             } else {
@@ -415,19 +421,37 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
     * @see org.apache.struts2.dispatcher.multipart.MultiPartRequest#cleanUp()
     */
     public void cleanUp() {
-        Set<String> names = files.keySet();
-        for (String name : names) {
-            List<FileItem> items = files.get(name);
-            for (FileItem item : items) {
-                if (LOG.isDebugEnabled()) {
-                    String msg = LocalizedTextUtil.findText(this.getClass(), "struts.messages.removing.file",
-                            Locale.ENGLISH, "no.message.found", new Object[]{name, item});
-                    LOG.debug(msg);
-                }
-                if (!item.isInMemory()) {
-                    item.delete();
+        try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Performing comprehensive cleanup for #0 file items.", String.valueOf(allFileItems.size()));
+            }
+            for (FileItem item : allFileItems) {
+                try {
+                    if (item instanceof DiskFileItem) {
+                        DiskFileItem diskItem = (DiskFileItem) item;
+                        File storeLocation = diskItem.getStoreLocation();
+                        if (storeLocation != null && storeLocation.exists()) {
+                            if (LOG.isDebugEnabled()) {
+                                LOG.debug("Deleting temporary file: [#0]", storeLocation.getName());
+                            }
+                            if (!storeLocation.delete() && LOG.isWarnEnabled()) {
+                                LOG.warn("Unable to delete temporary file: [#0]", storeLocation.getName());
+                            }
+                        }
+                    }
+                    // Also call the item's delete method as backup
+                    if (!item.isInMemory()) {
+                        item.delete();
+                    }
+                } catch (Exception e) {
+                    if (LOG.isWarnEnabled()) {
+                        LOG.warn("Error during cleanup of file item: [#0]", e, item.getFieldName());
+                    }
                 }
             }
+        } finally {
+            // Clear only the tracking collection, preserve parsed data
+            allFileItems.clear();
         }
     }
 
