@@ -60,6 +60,29 @@ public class JakartaMultiPartRequestTest extends StrutsInternalTestCase {
         super.tearDown();
     }
 
+    public void testTooLongFormFieldLeavesNoTempFile() throws Exception {
+        multiPartRequest.parse(request(null, formField("field", "this value is longer than the limit")), tempDir.getAbsolutePath());
+
+        assertEquals(1, multiPartRequest.getErrors().size());
+        assertNull(multiPartRequest.getParameter("field"));
+        assertEquals("the refused field has to be deleted without a cleanUp", 0, tempDir.listFiles().length);
+    }
+
+    public void testFormFieldWithUnknownCharsetLeavesNoTempFile() throws Exception {
+        multiPartRequest.parse(request("no-such-charset", formField("field", "short")), tempDir.getAbsolutePath());
+
+        assertEquals(1, multiPartRequest.getErrors().size());
+        assertEquals("the field has to be deleted without a cleanUp", 0, tempDir.listFiles().length);
+    }
+
+    public void testAcceptedFormFieldLeavesNoTempFile() throws Exception {
+        multiPartRequest.parse(request(null, formField("field", "short")), tempDir.getAbsolutePath());
+
+        assertEquals(0, multiPartRequest.getErrors().size());
+        assertEquals("short", multiPartRequest.getParameter("field"));
+        assertEquals(0, tempDir.listFiles().length);
+    }
+
     public void testDefaultMaxStringLengthReachesTheParser() throws Exception {
         StringBuilder atLimit = new StringBuilder();
         for (int i = 0; i < 4096; i++) {

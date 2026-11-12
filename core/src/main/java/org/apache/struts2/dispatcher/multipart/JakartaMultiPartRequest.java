@@ -175,40 +175,43 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
     }
 
     protected void processNormalFormField(FileItem item, String charset) throws UnsupportedEncodingException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Item is a normal form field");
-        }
-        List<String> values;
-        if (params.get(item.getFieldName()) != null) {
-            values = params.get(item.getFieldName());
-        } else {
-            values = new ArrayList<String>();
-        }
-
-        long size = item.getSize();
-        if (size == 0) {
-            values.add(StringUtils.EMPTY);
-        } else if (size > maxStringLength) {
-            String errorKey = "struts.messages.upload.error.parameter.too.long";
-            String errorMessage = LocalizedTextUtil.findText(this.getClass(), errorKey, defaultLocale, null,
-                    new Object[]{item.getFieldName(), maxStringLength, size});
-
-            if (!errors.contains(errorMessage)) {
-                errors.add(errorMessage);
+        try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Item is a normal form field");
             }
-            return;
+            List<String> values;
+            if (params.get(item.getFieldName()) != null) {
+                values = params.get(item.getFieldName());
+            } else {
+                values = new ArrayList<String>();
+            }
 
-        } else if (charset != null) {
-            values.add(item.getString(charset));
-        } else {
-            // note: see http://jira.opensymphony.com/browse/WW-633
-            // basically, in some cases the charset may be null, so
-            // we're just going to try to "other" method (no idea if this
-            // will work)
-            values.add(item.getString());
+            long size = item.getSize();
+            if (size == 0) {
+                values.add(StringUtils.EMPTY);
+            } else if (size > maxStringLength) {
+                String errorKey = "struts.messages.upload.error.parameter.too.long";
+                String errorMessage = LocalizedTextUtil.findText(this.getClass(), errorKey, defaultLocale, null,
+                        new Object[]{item.getFieldName(), maxStringLength, size});
+
+                if (!errors.contains(errorMessage)) {
+                    errors.add(errorMessage);
+                }
+                return;
+
+            } else if (charset != null) {
+                values.add(item.getString(charset));
+            } else {
+                // note: see http://jira.opensymphony.com/browse/WW-633
+                // basically, in some cases the charset may be null, so
+                // we're just going to try to "other" method (no idea if this
+                // will work)
+                values.add(item.getString());
+            }
+            params.put(item.getFieldName(), values);
+        } finally {
+            item.delete();
         }
-        params.put(item.getFieldName(), values);
-        item.delete();
     }
 
     protected List<FileItem> parseRequest(HttpServletRequest servletRequest, String saveDir) throws FileUploadException {
