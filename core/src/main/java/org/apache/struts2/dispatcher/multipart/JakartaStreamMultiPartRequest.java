@@ -120,10 +120,15 @@ public class JakartaStreamMultiPartRequest implements MultiPartRequest {
         LOG.debug("Performing File Upload temporary storage cleanup.");
         for (String fieldName : fileInfos.keySet()) {
             for (FileInfo fileInfo : fileInfos.get(fieldName)) {
-                File file = fileInfo.getFile();
-                LOG.debug("Deleting file '#0'.", file.getName());
-                if (!file.delete())
-                    LOG.warn("There was a problem attempting to delete file '#0'.", file.getName());
+                try {
+                    // catch any exceptions during cleanup to ensure all files are deleted.
+                    File file = fileInfo.getFile();
+                    LOG.debug("Deleting file '#0'.", file.getName());
+                    if (!file.delete())
+                        LOG.warn("There was a problem attempting to delete file '#0'.", file.getName());
+                } catch (Exception e) {
+                    LOG.warn("Error during cleanup of file item: [#0]", e, fileInfo.getOriginalName());
+                }
             }
         }
     }

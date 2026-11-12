@@ -169,6 +169,18 @@ public class JakartaMultiPartRequestTest extends StrutsInternalTestCase {
         assertEquals(0, tempDir.listFiles().length);
     }
 
+    public void testItemsAfterAFailingFieldAreCleanedUp() throws Exception {
+        multiPartRequest.parse(request("no-such-charset", formField("field", "value"), filePart("file", "file.txt", "file content")),
+                tempDir.getAbsolutePath());
+
+        assertEquals(1, tempDir.listFiles().length);
+        assertEquals(1, multiPartRequest.getErrors().size());
+
+        multiPartRequest.cleanUp();
+
+        assertEquals(0, tempDir.listFiles().length);
+    }
+
     public void testDefaultMaxStringLengthReachesTheParser() throws Exception {
         StringBuilder atLimit = new StringBuilder();
         for (int i = 0; i < 4096; i++) {
