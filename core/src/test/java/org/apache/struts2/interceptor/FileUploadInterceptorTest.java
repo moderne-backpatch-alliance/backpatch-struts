@@ -385,6 +385,50 @@ public class FileUploadInterceptorTest extends StrutsInternalTestCase {
                 msg);
     }
 
+    public void testCaseVariantsOfFileParametersAreRemoved() throws Exception {
+        Map<String, Object> param = new HashMap<String, Object>();
+        param.put("uploadFileName", "from a form field");
+        param.put("UPLOADCONTENTTYPE", "from a form field");
+        param.put("other", "kept");
+
+        interceptAndUpload(param, "Upload");
+
+        assertEquals(4, param.size());
+        assertEquals("kept", param.get("other"));
+        assertEquals("deleteme.txt", ((String[]) param.get("UploadFileName"))[0]);
+        assertEquals("text/html", ((String[]) param.get("UploadContentType"))[0]);
+        assertNotNull(param.get("Upload"));
+    }
+
+    private void interceptAndUpload(Map<String, Object> param, String... inputNames) throws Exception {
+        StringBuilder content = new StringBuilder();
+        for (String inputName : inputNames) {
+            content.append("-----1234\r\n")
+                    .append("Content-Disposition: form-data; name=\"").append(inputName).append("\"; filename=\"deleteme.txt\"\r\n")
+                    .append("Content-Type: text/html\r\n\r\n")
+                    .append("Unit test of FileUploadInterceptor\r\n");
+        }
+        content.append("-----1234--\r\n");
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setCharacterEncoding("UTF-8");
+        req.setMethod("post");
+        req.setContentType("multipart/form-data; boundary=---1234");
+        req.setContent(content.toString().getBytes("US-ASCII"));
+
+        MyFileupAction action = new MyFileupAction();
+        MockActionInvocation mai = new MockActionInvocation();
+        mai.setAction(action);
+        mai.setResultCode("success");
+        mai.setInvocationContext(ActionContext.getContext());
+        ActionContext.getContext().setParameters(param);
+        ActionContext.getContext().put(ServletActionContext.HTTP_REQUEST, createMultipartRequest(req, 2000));
+
+        interceptor.intercept(mai);
+
+        assertFalse(action.hasErrors());
+    }
+
     private String encodeTextFile(String bondary, String endline, String name, String filename, String contentType, String content) {
         final StringBuilder sb = new StringBuilder(64);
         sb.append(endline);
