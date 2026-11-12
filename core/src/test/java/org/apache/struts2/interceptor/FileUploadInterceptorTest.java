@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -335,6 +336,55 @@ public class FileUploadInterceptorTest extends StrutsInternalTestCase {
         assertNotNull("test1.html", fileRealFilenames[0]);
     }
 
+    public void testMultipartRequestMaxStringLength() throws Exception {
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setCharacterEncoding("UTF-8");
+        req.setMethod("post");
+        req.setContentType("multipart/form-data; boundary=---1234");
+        req.addHeader("Content-type", "multipart/form-data; boundary=---1234");
+
+        // inspired by the unit tests for jakarta commons fileupload
+        String content = ("-----1234\r\n" +
+                "Content-Disposition: form-data; name=\"file\"; filename=\"deleteme.txt\"\r\n" +
+                "Content-Type: text/html\r\n" +
+                "\r\n" +
+                "Unit test of FileUploadInterceptor" +
+                "\r\n" +
+                "-----1234\r\n" +
+                "Content-Disposition: form-data; name=\"normalFormField1\"\r\n" +
+                "\r\n" +
+                "it works" +
+                "\r\n" +
+                "-----1234\r\n" +
+                "Content-Disposition: form-data; name=\"normalFormField2\"\r\n" +
+                "\r\n" +
+                "long string should not work" +
+                "\r\n" +
+                "-----1234--\r\n");
+        req.setContent(content.getBytes("US-ASCII"));
+
+        MyFileupAction action = new MyFileupAction();
+
+        MockActionInvocation mai = new MockActionInvocation();
+        mai.setAction(action);
+        mai.setResultCode("success");
+        mai.setInvocationContext(ActionContext.getContext());
+        Map<String, Object> param = new HashMap<String, Object>();
+        ActionContext.getContext().setParameters(param);
+        ActionContext.getContext().put(ServletActionContext.HTTP_REQUEST, createMultipartRequest(req, -1, 20));
+
+        interceptor.intercept(mai);
+
+        assertTrue(action.hasActionErrors());
+
+        Collection<String> errors = action.getActionErrors();
+        assertEquals(1, errors.size());
+        String msg = errors.iterator().next();
+        assertEquals(
+                "The request parameter \"normalFormField2\" was too long.  Max length allowed is 20, but found 27!",
+                msg);
+    }
+
     private String encodeTextFile(String bondary, String endline, String name, String filename, String contentType, String content) {
         final StringBuilder sb = new StringBuilder(64);
         sb.append(endline);
@@ -358,6 +408,13 @@ public class FileUploadInterceptorTest extends StrutsInternalTestCase {
     private MultiPartRequestWrapper createMultipartRequest(HttpServletRequest req, int maxsize) throws IOException {
         JakartaMultiPartRequest jak = new JakartaMultiPartRequest();
         jak.setMaxSize(String.valueOf(maxsize));
+        return new MultiPartRequestWrapper(jak, req, tempDir.getAbsolutePath(), new DefaultLocaleProvider());
+    }
+
+    private MultiPartRequestWrapper createMultipartRequest(HttpServletRequest req, int maxsize, int maxStringLength) throws IOException {
+        JakartaMultiPartRequest jak = new JakartaMultiPartRequest();
+        jak.setMaxSize(String.valueOf(maxsize));
+        jak.setMaxStringLength(String.valueOf(maxStringLength));
         return new MultiPartRequestWrapper(jak, req, tempDir.getAbsolutePath(), new DefaultLocaleProvider());
     }
 

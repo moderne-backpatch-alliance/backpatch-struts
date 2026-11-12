@@ -33,6 +33,7 @@ import org.apache.commons.fileupload.RequestContext;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.struts2.StrutsConstants;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,11 +67,22 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
     protected List<String> errors = new ArrayList<String>();
 
     protected long maxSize;
+
+    /**
+     * Specifies the maximum length of a string parameter in a multipart request.
+     */
+    protected Long maxStringLength;
+
     private Locale defaultLocale = Locale.ENGLISH;
 
     @Inject(StrutsConstants.STRUTS_MULTIPART_MAXSIZE)
     public void setMaxSize(String maxSize) {
         this.maxSize = Long.parseLong(maxSize);
+    }
+
+    @Inject(StrutsConstants.STRUTS_MULTIPART_MAX_STRING_LENGTH)
+    public void setMaxStringLength(String maxStringLength) {
+        this.maxStringLength = Long.parseLong(maxStringLength);
     }
 
     @Inject
@@ -173,13 +185,26 @@ public class JakartaMultiPartRequest implements MultiPartRequest {
             values = new ArrayList<String>();
         }
 
-        // note: see http://jira.opensymphony.com/browse/WW-633
-        // basically, in some cases the charset may be null, so
-        // we're just going to try to "other" method (no idea if this
-        // will work)
-        if (charset != null) {
+        long size = item.getSize();
+        if (size == 0) {
+            values.add(StringUtils.EMPTY);
+        } else if (size > maxStringLength) {
+            String errorKey = "struts.messages.upload.error.parameter.too.long";
+            String errorMessage = LocalizedTextUtil.findText(this.getClass(), errorKey, defaultLocale, null,
+                    new Object[]{item.getFieldName(), maxStringLength, size});
+
+            if (!errors.contains(errorMessage)) {
+                errors.add(errorMessage);
+            }
+            return;
+
+        } else if (charset != null) {
             values.add(item.getString(charset));
         } else {
+            // note: see http://jira.opensymphony.com/browse/WW-633
+            // basically, in some cases the charset may be null, so
+            // we're just going to try to "other" method (no idea if this
+            // will work)
             values.add(item.getString());
         }
         params.put(item.getFieldName(), values);

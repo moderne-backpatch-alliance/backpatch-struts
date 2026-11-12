@@ -131,6 +131,9 @@ public final class StrutsConstants {
     /** The maximize size of a multipart request (file upload) */
     public static final String STRUTS_MULTIPART_MAXSIZE = "struts.multipart.maxSize";
 
+    /** The maximum length of a string parameter in a multipart request. */
+    public static final String STRUTS_MULTIPART_MAX_STRING_LENGTH = "struts.multipart.maxStringLength";
+
     /** The directory to use for storing uploaded files */
     public static final String STRUTS_MULTIPART_SAVEDIR = "struts.multipart.saveDir";
 
