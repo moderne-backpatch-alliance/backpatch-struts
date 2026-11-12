@@ -400,6 +400,21 @@ public class FileUploadInterceptorTest extends StrutsInternalTestCase {
         assertNotNull(param.get("Upload"));
     }
 
+    public void testExpressionsNamingFileParametersAreRemoved() throws Exception {
+        Map<String, Object> param = new HashMap<String, Object>();
+        param.put("top.UploadFileName", "from a form field");
+        param.put("Top.uploadcontenttype", "from a form field");
+        param.put("other", "kept");
+
+        interceptAndUpload(param, "Upload");
+
+        assertEquals(4, param.size());
+        assertEquals("kept", param.get("other"));
+        assertEquals("deleteme.txt", ((String[]) param.get("UploadFileName"))[0]);
+        assertEquals("text/html", ((String[]) param.get("UploadContentType"))[0]);
+        assertNotNull(param.get("Upload"));
+    }
+
     private void interceptAndUpload(Map<String, Object> param, String... inputNames) throws Exception {
         StringBuilder content = new StringBuilder();
         for (String inputName : inputNames) {
