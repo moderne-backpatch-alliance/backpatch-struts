@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00002
+release: 2.3.37.1-backpatch-00003
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -20,12 +20,21 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00002 (backpatch-struts@b497d13).
+    note: Carried from 2.3.37.1-backpatch-00002; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00002 (backpatch-struts@b497d13).
+  - cve: CVE-2020-17530
+    upstream_fix_url: https://github.com/advisories/GHSA-jc35-q369-45pv
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2020-17530
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/commit/6ead597
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00003 (backpatch-struts@6ead597).
 tests:
-  commit: b497d13509f3442aac39e394a81410f455bdfc65
+  commit: 6ead5979fe75e6d1ec50f8bfc57e27ebe6be9706
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00002-tests.zip
-  report_sha256: 36db36a2f926ffe87a899cf86e85df23af84019fbfebb73296702c9fc4385771
+  report: struts2-core-2.3.37.1-backpatch-00003-tests.zip
+  report_sha256: a96f2ab686c538d67fd96ed716413b2ab7198ef089f995624054c4acde0ad438
   result: pass
-  note: "1688 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1694 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
