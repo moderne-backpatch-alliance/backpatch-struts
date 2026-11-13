@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00005
+release: 2.3.37.1-backpatch-00006
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -47,12 +47,21 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00005 (backpatch-struts@3ba3a6d). Struts now refuses an OGNL list index above 255 when it would grow a list, and any index above 255 when it sets a list element (CVE-2023-34149). If your forms post list elements by index past 255, such as `users[300].name` on an action with a `List` named `users`, or `tags[300]=red` even when the list already holds that many elements, the parameter is not set and the value is missing from the action, with no error shown to the user. Raise the limit with `struts.ognl.autoGrowthCollectionLimit` (or the older `xwork.autoGrowCollectionLimit`) in `struts.xml` or `struts.properties`, to the largest index your forms post; a very large limit brings back the exposure the fix closes.
+    note: Carried from 2.3.37.1-backpatch-00005; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00005 (backpatch-struts@3ba3a6d). Struts now refuses an OGNL list index above 255 when it would grow a list, and any index above 255 when it sets a list element (CVE-2023-34149). If your forms post list elements by index past 255, such as `users[300].name` on an action with a `List` named `users`, or `tags[300]=red` even when the list already holds that many elements, the parameter is not set and the value is missing from the action, with no error shown to the user. Raise the limit with `struts.ognl.autoGrowthCollectionLimit` (or the older `xwork.autoGrowCollectionLimit`) in `struts.xml` or `struts.properties`, to the largest index your forms post; a very large limit brings back the exposure the fix closes.
+  - cve: CVE-2023-34396
+    upstream_fix_url: https://github.com/advisories/GHSA-4g42-gqrg-4633
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2023-34396
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/compare/65597b0~1...0734fa0
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00006 (backpatch-struts@65597b0..0734fa0). Struts now refuses a normal (non-file) field longer than 4096 bytes in a multipart form post (CVE-2023-34396). If your upload forms carry long text, such as a 5000 character textarea, that field's value is dropped and the action gets the error 'The request parameter "comment" was too long...', so with the default stack the user is sent back to the `input` result; the limit counts bytes, so text outside ASCII reaches it sooner. Raise it with `struts.multipart.maxStringLength` to the longest field you accept; a very large value brings back the exposure the fix closes.
 tests:
-  commit: 3ba3a6dd89610698657af3973e60f7b5ca65d763
+  commit: 0734fa031d03e29a3f3c4c0f0444017682ffe32e
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00005-tests.zip
-  report_sha256: a659d8659d3d7e996d96523ad021b2d9a5fad868d02cb5d712dfdffa28e32894
+  report: struts2-core-2.3.37.1-backpatch-00006-tests.zip
+  report_sha256: 66b48adb28df6f0cf5bde7581e6e9070c00c71c23c9bd101626c0e46521ff033
   result: pass
-  note: "1707 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1709 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
