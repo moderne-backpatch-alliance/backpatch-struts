@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00003
+release: 2.3.37.1-backpatch-00004
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -29,12 +29,21 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00003 (backpatch-struts@6ead597).
+    note: Carried from 2.3.37.1-backpatch-00003; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00003 (backpatch-struts@6ead597).
+  - cve: CVE-2021-31805
+    upstream_fix_url: https://github.com/apache/struts/commit/8d6e26e0feb8cb1669f45a66e458860534b94571
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2021-31805
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/commit/7dc5958
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: "New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00004 (backpatch-struts@7dc5958). Struts tags now replace every character other than letters, digits and `_` with `_` when they build an element id from a field or action name, and evaluate a name that is itself an expression a second time only when the result passes Struts' accepted and excluded patterns (CVE-2021-31805). If your CSS or scripts address generated ids built from names with dashes or other punctuation, they stop matching: a textfield `user-name` in form `register` gets the id `register_user_name` where 2.3.37 gave `register_user-name`, and a form for the action `save-user` gets `save_user`. If a tag `name`, `<s:param>` name or stream result `inputName` is an expression whose result your app relies on being evaluated again and that result fails the patterns (a dash or quote is enough), the textfield shows the result as text, the param tag fails with \"Excluded or not accepted name found\", and the stream result cannot find its stream. Set an explicit `id` on the tag, which is used as given, or update the selectors; give the textfield a `value` attribute instead of relying on the second evaluation of `name`."
 tests:
-  commit: 6ead5979fe75e6d1ec50f8bfc57e27ebe6be9706
+  commit: 7dc59580640706db762413c30c081fb05d7cd73d
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00003-tests.zip
-  report_sha256: a96f2ab686c538d67fd96ed716413b2ab7198ef089f995624054c4acde0ad438
+  report: struts2-core-2.3.37.1-backpatch-00004-tests.zip
+  report_sha256: da25f33779bfecfd38265fcd3f337129bb1bfcf3e5e9e8eee0e9e02ba58b7cd3
   result: pass
-  note: "1694 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1704 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
