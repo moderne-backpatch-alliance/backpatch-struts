@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00007
+release: 2.3.37.1-backpatch-00008
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -65,12 +65,21 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00007 (backpatch-struts@d5fc8ea).
+    note: Carried from 2.3.37.1-backpatch-00007; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00007 (backpatch-struts@d5fc8ea).
+  - cve: CVE-2023-50164
+    upstream_fix_url: https://github.com/advisories/GHSA-2j39-qcjm-428w
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2023-50164
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/commit/c11299f
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00008 (backpatch-struts@c11299f). Struts 2 applications that upload files through the fileUpload interceptor drop a request parameter whose name matches an upload field's name, or its FileName or ContentType parameter, ignoring case, before the interceptor sets the uploaded file's values (CVE-2023-50164). With the file field upload, a form field named UploadFileName or UPLOADCONTENTTYPE no longer reaches the action, so the action's file name and content type come only from the uploaded file.
 tests:
-  commit: d5fc8eaf51ecf9fba63be33764fc1ba342cecfe9
+  commit: c11299f8bc03933818b2aed656630874e03f470f
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00007-tests.zip
-  report_sha256: bd72eccfda6268888b7a232de29f60a7eaaba98e99133e1db4653fcd4ce1ed95
+  report: struts2-core-2.3.37.1-backpatch-00008-tests.zip
+  report_sha256: 5724226d727dce885f6f642a1b0fb4a8af781b183133f9fc1f8c7df2d1adc5f1
   result: pass
-  note: "1712 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1713 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
