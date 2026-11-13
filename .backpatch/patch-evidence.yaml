@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00009
+release: 2.3.37.1-backpatch-00010
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -83,12 +83,30 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: "New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00009 (backpatch-struts@a87ee7a). Struts 2 applications that upload files through the fileUpload interceptor drop every request parameter whose name contains an upload field's FileName or ContentType parameter name, ignoring case, before the interceptor sets that field's values (CVE-2024-53677). With the file field upload, form fields such as top.uploadFileName or uploadFileNameHint no longer reach the action. This also removes values the interceptor set itself for another upload field whose name ends in the first one's: with the upload fields file and myfile, myfileFileName and myfileContentType are lost when file is handled after myfile, which depends on the order of the multipart parts, so the action sees a null file name and content type for myfile."
+    note: "Carried from 2.3.37.1-backpatch-00009; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00009 (backpatch-struts@a87ee7a). Struts 2 applications that upload files through the fileUpload interceptor drop every request parameter whose name contains an upload field's FileName or ContentType parameter name, ignoring case, before the interceptor sets that field's values (CVE-2024-53677). With the file field upload, form fields such as top.uploadFileName or uploadFileNameHint no longer reach the action. This also removes values the interceptor set itself for another upload field whose name ends in the first one's: with the upload fields file and myfile, myfileFileName and myfileContentType are lost when file is handled after myfile, which depends on the order of the multipart parts, so the action sees a null file name and content type for myfile."
+  - cve: CVE-2025-64775
+    upstream_fix_url: https://github.com/advisories/GHSA-xx7v-hqxh-cjr9
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2025-64775
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/compare/d6442e3~1...7309fa4
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00010 (backpatch-struts@d6442e3..7309fa4).
+  - cve: CVE-2025-66675
+    upstream_fix_url: https://github.com/advisories/GHSA-rg58-xhh7-mqjw
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2025-66675
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/compare/d6442e3~1...7309fa4
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00010 (backpatch-struts@d6442e3..7309fa4).
 tests:
-  commit: a87ee7a58dc45d0c0dc459990cdc5672fa82a6ae
+  commit: 7309fa40d87e537d259bb4cd9dab353c006aa273
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00009-tests.zip
-  report_sha256: e8121c040cbdf9f3103de760acf48b56bbc9d6d4e0c877035556e62f2b51e0f0
+  report: struts2-core-2.3.37.1-backpatch-00010-tests.zip
+  report_sha256: 38be19f92601ea346995525369dd3cfb51590829186e3a89466e5da706bd9372
   result: pass
-  note: "1714 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1718 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
