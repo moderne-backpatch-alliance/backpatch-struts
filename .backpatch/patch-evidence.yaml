@@ -1,6 +1,6 @@
 schema: osera-patch-evidence/0.1.0
 producer: moderne
-release: 2.3.37.1-backpatch-00011
+release: 2.3.37.1-backpatch-00012
 baseline: v2.3.37+backpatch.baseline
 fixes:
   - cve: CVE-2019-0230
@@ -110,12 +110,21 @@ fixes:
     artifacts:
       - org.apache.struts:struts2-core
       - org.apache.struts.xwork:xwork-core
-    note: "New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00011 (backpatch-struts@3575ad8). Struts XSLT results now create their `TransformerFactory` with the JAXP 1.5 attributes `accessExternalDTD` and `accessExternalStylesheet` set to empty, and the parser for `struts.xml` and validation files no longer resolves external entities (CVE-2025-68493). If Xalan 2.7.2 or another factory without JAXP 1.5 support is on your classpath, every XSLT result fails with `IllegalArgumentException` (\"Not supported: http://javax.xml.XMLConstants/property/accessExternalDTD\"); a stylesheet that declares an external DTD fails to load; and external entities in your Struts XML files are no longer read. Use the JDK's factory, by removing Xalan or starting with `-Djavax.xml.transform.TransformerFactory=com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl`, move DTD declarations into the stylesheet's internal subset, and replace entity includes in `struts.xml` with `<include file=\"...\"/>`. Overriding the new protected `XSLTResult.createTransformerFactory()` to leave the attributes out keeps another factory working, and brings back the exposure the fix closes."
+    note: "Carried from 2.3.37.1-backpatch-00011; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00011 (backpatch-struts@3575ad8). Struts XSLT results now create their `TransformerFactory` with the JAXP 1.5 attributes `accessExternalDTD` and `accessExternalStylesheet` set to empty, and the parser for `struts.xml` and validation files no longer resolves external entities (CVE-2025-68493). If Xalan 2.7.2 or another factory without JAXP 1.5 support is on your classpath, every XSLT result fails with `IllegalArgumentException` (\"Not supported: http://javax.xml.XMLConstants/property/accessExternalDTD\"); a stylesheet that declares an external DTD fails to load; and external entities in your Struts XML files are no longer read. Use the JDK's factory, by removing Xalan or starting with `-Djavax.xml.transform.TransformerFactory=com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl`, move DTD declarations into the stylesheet's internal subset, and replace entity includes in `struts.xml` with `<include file=\"...\"/>`. Overriding the new protected `XSLTResult.createTransformerFactory()` to leave the attributes out keeps another factory working, and brings back the exposure the fix closes."
+  - cve: CVE-2026-104711
+    upstream_fix_url: https://github.com/apache/struts/commit/2620abedd86eb79bd1d25550bfcf878ba7ace4a9
+    advisory_url: https://nvd.nist.gov/vuln/detail/CVE-2026-104711
+    patch_commit_url: https://github.com/moderne-backpatch-alliance/backpatch-struts/commit/98a7ce9
+    basis: adapted
+    artifacts:
+      - org.apache.struts:struts2-core
+      - org.apache.struts.xwork:xwork-core
+    note: New in this release; ported onto 2.3.37; fixed at 2.3.37.1-backpatch-00012 (backpatch-struts@98a7ce9).
 tests:
-  commit: 3575ad8afb5b6caffecb23f779ba507fb94b56e7
+  commit: 98a7ce92269c28b97c791f9ec90e89b524e22a35
   command: "weekend-struts2-2.3.37.sh suite: mvn -B -DskipAssembly -pl xwork-core,core, surefire 2.22.2, test failures ignored; the report decides -Dsurefire.excludesFile=struts2-2.3.37.excludes"
   runtime: openjdk version 1.8.0_382 (Zulu) for the tests, Apache Maven 3.9.16; main classes compiled by Zulu 6u42's javac
-  report: struts2-core-2.3.37.1-backpatch-00011-tests.zip
-  report_sha256: dbd6aaa68f5be3e6e70db2bca2be644d0d17dad3c9d067074b436d803b42eb71
+  report: struts2-core-2.3.37.1-backpatch-00012-tests.zip
+  report_sha256: f9dc79bd8f56ad84228e8734fde922b07728ac75673735da8fc35669daa80610
   result: pass
-  note: "1721 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
+  note: "1723 tests at the patch commit, 0 of them skipped by the suite, 0 failed, 0 errors. Left out of the run as accepted exceptions: com.opensymphony.xwork2.util.NamedVariablePatternMatcherTest#testCompileWithMismatchedBracketsParses (the TestNG provider does not honour JUnit's expected exception; passes under plain JUnit 4). Main classes compiled with Zulu 6u42's javac at the pom's source and target; test classes compiled and run on Zulu 8. The TestNG provider runs no method-level exclusion, so all of NamedVariablePatternMatcherTest is left out, which also drops its passing testIsLiteral, testCompile and testMatch."
