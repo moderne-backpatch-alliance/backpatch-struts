@@ -21,10 +21,18 @@ import com.opensymphony.xwork2.config.providers.XmlConfigurationProvider;
 import com.opensymphony.xwork2.test.ModelDrivenAction2;
 import com.opensymphony.xwork2.test.TestBean2;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -234,6 +242,68 @@ public class LocalizedTextUtilTest extends XWorkTestCase {
 
         assertNotNull(rbGermany);
         assertEquals("Hallo", rbGermany.getString("hello"));
+    }
+
+    public void testBuildMessageFormatDoesNotHandOutTheCachedInstance() throws Exception {
+        LocalizedTextUtil.reset();
+        Method buildMessageFormat = LocalizedTextUtil.class.getDeclaredMethod("buildMessageFormat", String.class, Locale.class);
+        buildMessageFormat.setAccessible(true);
+        Field messageFormats = LocalizedTextUtil.class.getDeclaredField("messageFormats");
+        messageFormats.setAccessible(true);
+
+        MessageFormat first = (MessageFormat) buildMessageFormat.invoke(null, "{0,date,short}", Locale.US);
+        MessageFormat second = (MessageFormat) buildMessageFormat.invoke(null, "{0,date,short}", Locale.US);
+
+        assertNotSame("cached MessageFormat shared between callers ?", first, second);
+        assertEquals("pattern not cached once ?", 1, ((Map) messageFormats.get(null)).size());
+    }
+
+    public void testConcurrentDateFormattingDoesNotMixArguments() throws Exception {
+        LocalizedTextUtil.addDefaultResourceBundle("com/opensymphony/xwork2/util/LocalizedTextUtilTest");
+        final Date[] dates = {
+                DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse("01/01/2015"),
+                DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse("02/02/2020"),
+        };
+        final String[] expected = {"1/1/15", "2/2/20"};
+        assertEquals(expected[0], LocalizedTextUtil.findDefaultText("test.format.date", Locale.US, new Object[]{dates[0]}));
+        assertEquals(expected[1], LocalizedTextUtil.findDefaultText("test.format.date", Locale.US, new Object[]{dates[1]}));
+
+        int threads = 4;
+        final int iterations = 20000;
+        final AtomicInteger wrong = new AtomicInteger();
+        final AtomicReference<String> sample = new AtomicReference<String>();
+        final AtomicReference<Throwable> thrown = new AtomicReference<Throwable>();
+        final CountDownLatch start = new CountDownLatch(1);
+        Thread[] workers = new Thread[threads];
+        for (int t = 0; t < threads; t++) {
+            final int which = t % 2;
+            workers[t] = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        start.await();
+                        for (int i = 0; i < iterations; i++) {
+                            String out = LocalizedTextUtil.findDefaultText("test.format.date", Locale.US, new Object[]{dates[which]});
+                            if (!expected[which].equals(out)) {
+                                wrong.incrementAndGet();
+                                sample.compareAndSet(null, "expected <" + expected[which] + "> but was <" + out + ">");
+                            }
+                        }
+                    } catch (Throwable e) {
+                        thrown.compareAndSet(null, e);
+                    }
+                }
+            });
+        }
+        for (Thread worker : workers) {
+            worker.start();
+        }
+        start.countDown();
+        for (Thread worker : workers) {
+            worker.join();
+        }
+
+        assertNull("formatting threw under concurrency ?", thrown.get());
+        assertEquals("another caller's argument rendered: " + sample.get(), 0, wrong.get());
     }
 
     @Override
